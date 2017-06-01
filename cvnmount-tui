@@ -1,7 +1,9 @@
 #!/bin/bash
 
+BASENAME="${0##*/}"
+
 warn() {
-	echo "${0##*/}: $*" >&2
+	echo "$BASENAME: $*" >&2
 }
 
 die() {
@@ -23,9 +25,11 @@ action-mount() {
 
 	echo "Select a user-mountable mount point to mount:"
 
+	local PS3="$BASENAME.mount> "
+
 	select DST in "${USER_DSTS[@]}"
 	do
-		[ -n "$DST" ] || { echo "Exit."; break; }
+		[ -n "$DST" ] || { echo "Exit action mount."; break; }
 
 		echo "Mounting $DST ..."
 		mount "$DST" || warn "Error: Mounting $DST failed"
@@ -50,9 +54,13 @@ action-kerberos() {
 
 echo "What do you want to do today?"
 
+ORIG_PS3="$PS3"
+
+PS3="$BASENAME> "
+
 select ACTION in mount umount list-mounts kerberos
 do
-	[ -n "$ACTION" ] || { echo "Exit."; break; }
+	[ -n "$ACTION" ] || { echo "Exit $BASENAME."; break; }
 
 	action-"$ACTION" || warn "Warning: Action \"$ACTION\" seems to have been unsuccessful."
 done
