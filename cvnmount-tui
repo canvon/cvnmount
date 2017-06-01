@@ -13,8 +13,9 @@ die() {
 
 
 action-mount() {
-	USER_DSTS=()
+	local USER_DSTS=()
 
+	local SRC DST TYPE OPTS DUMMY
 	while read SRC DST TYPE OPTS DUMMY
 	do
 		grep -q -E '(^|,)users?(,|$)' <<<"$OPTS" || continue
@@ -28,6 +29,7 @@ action-mount() {
 
 	local PS3="$BASENAME mount> "
 
+	local DST
 	select DST in "${USER_DSTS[@]}"
 	do
 		if [ -z "$DST" ]
