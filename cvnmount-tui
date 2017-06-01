@@ -23,9 +23,8 @@ action-mount() {
 		USER_DSTS=("${USER_DSTS[@]}" "$DST")
 	done </etc/fstab
 
-	echo
-	echo "Select a user-mountable mount point to mount:"
-	echo
+	local CHOICE_TITLE="Select a user-mountable mount point to mount:"
+	give-choice-title
 
 	local PS3="$BASENAME mount> "
 
@@ -35,7 +34,7 @@ action-mount() {
 		then
 			case "$REPLY" in
 			\?|help)
-				hint
+				give-hint
 				continue
 				;;
 			0|exit|quit)
@@ -72,17 +71,22 @@ action-kerberos() {
 }
 
 
-echo "What do you want to do today?"
+CHOICE_TITLE="What do you want to do today?"
 
-hint() {
+give-choice-title() {
 	echo
+	echo "$CHOICE_TITLE"
+	echo
+}
+give-hint() {
+	give-choice-title
 	echo "Hint: Enter the number of an option you want to invoke,"
 	echo "      or 0 or ^D (Ctrl-D, End-of-Transmission) to exit"
 	echo "      to enclosing scope. Press enter without any input"
 	echo "      to repeat the list of options."
 	echo
 }
-hint
+give-hint
 
 ORIG_PS3="$PS3"
 
@@ -95,7 +99,7 @@ do
 	then
 		case "$REPLY" in
 		\?|help)
-			hint
+			give-hint
 			continue
 			;;
 		0|exit|quit)
