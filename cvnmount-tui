@@ -70,7 +70,8 @@ ORIG_PS3="$PS3"
 
 PS3="$BASENAME> "
 
-select ACTION in mount umount list-mounts kerberos
+VALID_ACTIONS=(mount umount list-mounts kerberos)
+select ACTION in "${VALID_ACTIONS[@]}"
 do
 	if [ -z "$ACTION" ]
 	then
@@ -84,8 +85,23 @@ do
 			break
 			;;
 		*)
-			warn "Invalid reply \"$REPLY\"!"
-			continue
+			# Try to lookup an action for the reply string-wise.
+			for OTHER_ACTION in "${VALID_ACTIONS[@]}"
+			do
+				if [ "$REPLY" = "$OTHER_ACTION" ]
+				then
+					ACTION="$OTHER_ACTION"
+					break
+				fi
+			done
+
+			# Still no action to invoke?
+			if [ -z "$ACTION" ]
+			then
+				warn "Invalid reply \"$REPLY\"!"
+				continue
+			fi
+			# Otherwise, fall-through.
 			;;
 		esac
 	fi
