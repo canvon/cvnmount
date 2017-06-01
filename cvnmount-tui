@@ -12,8 +12,8 @@ die() {
 }
 
 
-action-mount() {
-	local USER_DSTS=()
+read-mounts() {
+	TMP_DSTS=()
 
 	local SRC DST TYPE OPTS DUMMY
 	while read SRC DST TYPE OPTS DUMMY
@@ -31,8 +31,17 @@ action-mount() {
 		fi
 
 		# Append to bash array.
-		USER_DSTS=("${USER_DSTS[@]}" "$DST")
-	done </etc/fstab
+		TMP_DSTS=("${TMP_DSTS[@]}" "$DST")
+	done
+
+	return 0
+}
+
+action-mount() {
+	local TMP_DSTS=()
+	read-mounts </etc/fstab
+	local CONF_DSTS=("${TMP_DSTS[@]}")
+
 
 	local CHOICE_TITLE="Select a${USER_MODE:+ user-mountable} mount point to mount:"
 	give-choice-title
@@ -40,7 +49,7 @@ action-mount() {
 	local PS3="$(get-baseprompt) mount> "
 
 	local DST
-	select DST in "${USER_DSTS[@]}"
+	select DST in "${CONF_DSTS[@]}"
 	do
 		if [ -z "$DST" ]
 		then
@@ -68,36 +77,19 @@ action-mount() {
 }
 
 action-umount() {
-	local USER_DSTS=()
-
-	local SRC DST TYPE OPTS DUMMY
-	while read SRC DST TYPE OPTS DUMMY
-	do
-		# Skip comments.
-		[ "${SRC:0:1}" = "#" ] && continue
-
-		# Skip empty lines.
-		[ -n "$SRC" ] || continue
-
-		if [ -n "$USER_MODE" ]
-		then
-			# In user mode, filter to only user-mountable mount points.
-			grep -q -E '(^|,)users?(,|$)' <<<"$OPTS" || continue
-		fi
-
-		# Append to bash array.
-		USER_DSTS=("${USER_DSTS[@]}" "$DST")
-	done </etc/fstab
+	local TMP_DSTS=()
+	read-mounts </etc/fstab
+	local CONF_DSTS=("${TMP_DSTS[@]}")
 
 
 	local MOUNTED_DSTS=()
 
 	while read SRC DST TYPE OPTS DUMMY
 	do
-		local USER_DST
-		for USER_DST in "${USER_DSTS[@]}"
+		local CONF_DST
+		for CONF_DST in "${CONF_DSTS[@]}"
 		do
-			if [ "$DST" = "$USER_DST" ]
+			if [ "$DST" = "$CONF_DST" ]
 			then
 				MOUNTED_DSTS=("${MOUNTED_DSTS[@]}" "$DST")
 			fi
@@ -139,26 +131,9 @@ action-umount() {
 }
 
 action-list-mounts() {
-	local CONF_DSTS=()
-
-	local SRC DST TYPE OPTS DUMMY
-	while read SRC DST TYPE OPTS DUMMY
-	do
-		# Skip comments.
-		[ "${SRC:0:1}" = "#" ] && continue
-
-		# Skip empty lines.
-		[ -n "$SRC" ] || continue
-
-		if [ -n "$USER_MODE" ]
-		then
-			# In user mode, filter to only user-mountable mount points.
-			grep -q -E '(^|,)users?(,|$)' <<<"$OPTS" || continue
-		fi
-
-		# Append to bash array.
-		CONF_DSTS=("${CONF_DSTS[@]}" "$DST")
-	done </etc/fstab
+	local TMP_DSTS=()
+	read-mounts </etc/fstab
+	local CONF_DSTS=("${TMP_DSTS[@]}")
 
 
 	local MOUNTED_DSTS=()
