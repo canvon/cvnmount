@@ -255,7 +255,7 @@ action-kerberos() {
 
 		echo "Running Kerberos command $CMD ..."
 		echo
-		{ "$CMD" && echo; } || warn "Error: Running Kerberos command $CMD failed"
+		{ "$CMD" && echo; } || { echo; warn "Error: Running Kerberos command $CMD failed"; }
 	done
 
 	return 0
