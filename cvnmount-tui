@@ -150,6 +150,12 @@ action-list-mounts() {
 		# Skip empty lines.
 		[ -n "$SRC" ] || continue
 
+		if [ -n "$USER_MODE" ]
+		then
+			# In user mode, filter to only user-mountable mount points.
+			grep -q -E '(^|,)users?(,|$)' <<<"$OPTS" || continue
+		fi
+
 		# Append to bash array.
 		CONF_DSTS=("${CONF_DSTS[@]}" "$DST")
 	done </etc/fstab
