@@ -215,8 +215,9 @@ action-kerberos() {
 
 	local PS3="$(get-baseprompt) kerberos> "
 
+	local CREDENTIALS_CACHE=
 	local CMD
-	local VALID_CMDS=(kinit kdestroy klist)
+	local VALID_CMDS=(kinit kdestroy klist select-credentials-cache)
 	select CMD in "${VALID_CMDS[@]}"
 	do
 		if [ -z "$CMD" ]
@@ -253,9 +254,53 @@ action-kerberos() {
 			esac
 		fi
 
-		echo "Running Kerberos command $CMD ..."
+		case "$CMD" in
+		select-credentials-cache)
+			local CC_OPTIONS=()
+
+			local CC_BASES=(/tmp/krb5cc_$(id -u))
+			if [ -z "$USER_MODE" ]
+			then
+				CC_BASES=("${CC_BASES[@]}" /tmp/krb5ccmachine)
+			fi
+
+			local CC_BASE
+			for CC_BASE in "${CC_BASES[@]}"
+			do
+				CC_OPTIONS=("${CC_OPTIONS[@]}" "$CC_BASE")
+				local CC_OPTION
+				for CC_OPTION in "$CC_BASE"_*
+				do
+					# Skip failed glob.
+					[ "$CC_OPTION" = "${CC_BASE}_*" ] && continue
+
+					CC_OPTIONS=("${CC_OPTIONS[@]}" "$CC_OPTION")
+				done
+			done
+
+			local ORIG_PS3="$PS3"
+			PS3="$(get-baseprompt) kerberos cache> "
+			select CREDENTIALS_CACHE in default "${CC_OPTIONS[@]}"
+			do
+				if [ -z "$CREDENTIALS_CACHE" ]
+				then
+					CREDENTIALS_CACHE="$REPLY"
+				elif [ "$CREDENTIALS_CACHE" = "default" ]
+				then
+					CREDENTIALS_CACHE=
+				fi
+				break
+			done
+			PS3="$ORIG_PS3"
+			continue
+			;;
+		esac
+
+		local BASE_MSG="Running Kerberos command $CMD${CREDENTIALS_CACHE:+ (on credentials cache $CREDENTIALS_CACHE)}"
+		echo "$BASE_MSG ..."
 		echo
-		{ "$CMD" && echo; } || { echo; warn "Error: Running Kerberos command $CMD failed"; }
+		{ "$CMD" ${CREDENTIALS_CACHE:+-c "$CREDENTIALS_CACHE"} && echo; } \
+			|| { echo; warn "Error: $BASE_MSG failed"; }
 	done
 
 	return 0
