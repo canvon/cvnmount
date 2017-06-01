@@ -20,4 +20,12 @@ do
 	USER_DSTS=("${USER_DSTS[@]}" "$DST")
 done </etc/fstab
 
-echo "User-mountable mount points: ${USER_DSTS[*]}"
+echo "Select a user-mountable mount point to mount:"
+
+select DST in "${USER_DSTS[@]}"
+do
+	[ -n "$DST" ] || { echo "Exit."; break; }
+
+	echo "Mounting $DST ..."
+	mount "$DST" || warn "Error: mount failed"
+done
