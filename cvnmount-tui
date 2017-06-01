@@ -10,22 +10,49 @@ die() {
 }
 
 
-USER_DSTS=()
+action-mount() {
+	USER_DSTS=()
 
-while read SRC DST TYPE OPTS DUMMY
+	while read SRC DST TYPE OPTS DUMMY
+	do
+		grep -q -E '(^|,)users?(,|$)' <<<"$OPTS" || continue
+
+		# Append to bash array.
+		USER_DSTS=("${USER_DSTS[@]}" "$DST")
+	done </etc/fstab
+
+	echo "Select a user-mountable mount point to mount:"
+
+	select DST in "${USER_DSTS[@]}"
+	do
+		[ -n "$DST" ] || { echo "Exit."; break; }
+
+		echo "Mounting $DST ..."
+		mount "$DST" || warn "Error: Mounting $DST failed"
+	done
+}
+
+action-umount() {
+	warn "Action umount: Not implemented, yet."
+	return 1
+}
+
+action-list-mounts() {
+	warn "Action list mounts: Not implemented, yet."
+	return 1
+}
+
+action-kerberos() {
+	warn "Action Kerberos: Not implemented, yet."
+	return 1
+}
+
+
+echo "What do you want to do today?"
+
+select ACTION in mount umount list-mounts kerberos
 do
-	grep -q -E '(^|,)users?(,|$)' <<<"$OPTS" || continue
+	[ -n "$ACTION" ] || { echo "Exit."; break; }
 
-	# Append to bash array.
-	USER_DSTS=("${USER_DSTS[@]}" "$DST")
-done </etc/fstab
-
-echo "Select a user-mountable mount point to mount:"
-
-select DST in "${USER_DSTS[@]}"
-do
-	[ -n "$DST" ] || { echo "Exit."; break; }
-
-	echo "Mounting $DST ..."
-	mount "$DST" || warn "Error: Mounting $DST failed"
+	action-"$ACTION" || warn "Warning: Action \"$ACTION\" seems to have been unsuccessful."
 done
