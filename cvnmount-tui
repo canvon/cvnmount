@@ -63,8 +63,61 @@ action-umount() {
 }
 
 action-list-mounts() {
-	warn "Action list mounts: Not implemented, yet."
-	return 1
+	local CONF_DSTS=()
+
+	local SRC DST TYPE OPTS DUMMY
+	while read SRC DST TYPE OPTS DUMMY
+	do
+		# Append to bash array.
+		CONF_DSTS=("${CONF_DSTS[@]}" "$DST")
+	done </etc/fstab
+
+
+	local MOUNTED_DSTS=()
+
+	while read SRC DST TYPE OPTS DUMMY
+	do
+		local CONF_DST
+		for CONF_DST in "${CONF_DSTS[@]}"
+		do
+			if [ "$DST" = "$CONF_DST" ]
+			then
+				MOUNTED_DSTS=("${MOUNTED_DSTS[@]}" "$DST")
+			fi
+		done
+	done </proc/mounts
+
+	local CHOICE_TITLE="Retrieve mount details for a configured & mounted mount point:"
+	give-choice-title
+
+	local PS3="$BASENAME list-mounts> "
+
+	local DST
+	select DST in "${MOUNTED_DSTS[@]}"
+	do
+		if [ -z "$DST" ]
+		then
+			case "$REPLY" in
+			\?|help)
+				give-hint
+				continue
+				;;
+			0|exit|quit)
+				echo "Exit $BASENAME action list-mounts."
+				break
+				;;
+			*)
+				warn "list-mounts prompt: Invalid reply \"$REPLY\"!"
+				continue
+				;;
+			esac
+		fi
+
+		echo "Mount details for mount point $DST:"
+		awk "\$2 == \"$DST\" { print }" </proc/mounts || warn "Error: Extracting mount details for mount point $DST failed"
+	done
+
+	return 0
 }
 
 action-kerberos() {
