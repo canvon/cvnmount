@@ -24,10 +24,29 @@ read-mounts() {
 		# Skip empty lines.
 		[ -n "$SRC" ] || continue
 
-		if [ -n "$USER_MODE" ]
+		# Filter to only user-mountable?
+		if [ -n "$_ONLY_USER" ]
 		then
-			# In user mode, filter to only user-mountable mount points.
-			grep -q -E '(^|,)users?(,|$)' <<<"$OPTS" || continue
+			if [ -n "$USER_MODE" ]
+			then
+				# In user mode, filter to only user-mountable mount points.
+				grep -q -E '(^|,)users?(,|$)' <<<"$OPTS" || continue
+			fi
+		fi
+
+		# Filter to only configured?
+		if [ -n "$_ONLY_CONF" ]
+		then
+			local CONF_DST FOUND=
+			for CONF_DST in "${CONF_DSTS[@]}"
+			do
+				if [ "$DST" = "$CONF_DST" ]
+				then
+					FOUND=yes
+					break
+				fi
+			done
+			[ -n "$FOUND" ] || continue
 		fi
 
 		# Append to bash array.
@@ -39,7 +58,7 @@ read-mounts() {
 
 action-mount() {
 	local TMP_DSTS=()
-	read-mounts </etc/fstab
+	_ONLY_USER=yes read-mounts </etc/fstab
 	local CONF_DSTS=("${TMP_DSTS[@]}")
 
 
@@ -78,23 +97,13 @@ action-mount() {
 
 action-umount() {
 	local TMP_DSTS=()
-	read-mounts </etc/fstab
+	_ONLY_USER=yes read-mounts </etc/fstab
 	local CONF_DSTS=("${TMP_DSTS[@]}")
 
 
-	local MOUNTED_DSTS=()
-
-	while read SRC DST TYPE OPTS DUMMY
-	do
-		local CONF_DST
-		for CONF_DST in "${CONF_DSTS[@]}"
-		do
-			if [ "$DST" = "$CONF_DST" ]
-			then
-				MOUNTED_DSTS=("${MOUNTED_DSTS[@]}" "$DST")
-			fi
-		done
-	done </proc/mounts
+	TMP_DSTS=()
+	_ONLY_CONF=yes read-mounts </proc/mounts
+	local MOUNTED_DSTS=("${TMP_DSTS[@]}")
 
 
 	local CHOICE_TITLE="Select a mounted${USER_MODE:+ user-mountable} mount point to umount:"
@@ -132,23 +141,13 @@ action-umount() {
 
 action-list-mounts() {
 	local TMP_DSTS=()
-	read-mounts </etc/fstab
+	_ONLY_USER=yes read-mounts </etc/fstab
 	local CONF_DSTS=("${TMP_DSTS[@]}")
 
 
-	local MOUNTED_DSTS=()
-
-	while read SRC DST TYPE OPTS DUMMY
-	do
-		local CONF_DST
-		for CONF_DST in "${CONF_DSTS[@]}"
-		do
-			if [ "$DST" = "$CONF_DST" ]
-			then
-				MOUNTED_DSTS=("${MOUNTED_DSTS[@]}" "$DST")
-			fi
-		done
-	done </proc/mounts
+	TMP_DSTS=()
+	_ONLY_CONF=yes read-mounts </proc/mounts
+	local MOUNTED_DSTS=("${TMP_DSTS[@]}")
 
 
 	local CHOICE_TITLE="Retrieve mount details for a configured & mounted mount point:"
