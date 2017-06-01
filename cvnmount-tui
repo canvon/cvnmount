@@ -23,13 +23,15 @@ action-mount() {
 		USER_DSTS=("${USER_DSTS[@]}" "$DST")
 	done </etc/fstab
 
+	echo
 	echo "Select a user-mountable mount point to mount:"
+	echo
 
-	local PS3="$BASENAME.mount> "
+	local PS3="$BASENAME mount> "
 
 	select DST in "${USER_DSTS[@]}"
 	do
-		[ -n "$DST" ] || { echo "Exit action mount."; break; }
+		[ -n "$DST" ] || { echo "Exit $BASENAME action mount."; break; }
 
 		echo "Mounting $DST ..."
 		mount "$DST" || warn "Error: Mounting $DST failed"
