@@ -31,11 +31,29 @@ action-mount() {
 
 	select DST in "${USER_DSTS[@]}"
 	do
-		[ -n "$DST" ] || { echo "Exit $BASENAME action mount."; break; }
+		if [ -z "$DST" ]
+		then
+			case "$REPLY" in
+			\?|help)
+				hint
+				continue
+				;;
+			0|exit|quit)
+				echo "Exit $BASENAME action mount."
+				break
+				;;
+			*)
+				warn "mount prompt: Invalid reply \"$REPLY\"!"
+				continue
+				;;
+			esac
+		fi
 
 		echo "Mounting $DST ..."
 		mount "$DST" || warn "Error: Mounting $DST failed"
 	done
+
+	return 0
 }
 
 action-umount() {
