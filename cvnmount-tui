@@ -54,6 +54,12 @@ action-kerberos() {
 
 echo "What do you want to do today?"
 
+echo
+echo "Hint: Enter the number of an option you want to invoke,"
+echo "      or 0 or ^D (Ctrl-D, End-of-Transmission) to exit"
+echo "      to enclosing scope."
+echo
+
 ORIG_PS3="$PS3"
 
 PS3="$BASENAME> "
