@@ -27,5 +27,5 @@ do
 	[ -n "$DST" ] || { echo "Exit."; break; }
 
 	echo "Mounting $DST ..."
-	mount "$DST" || warn "Error: mount failed"
+	mount "$DST" || warn "Error: Mounting $DST failed"
 done
