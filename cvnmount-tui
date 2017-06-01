@@ -24,16 +24,20 @@ action-mount() {
 		# Skip empty lines.
 		[ -n "$SRC" ] || continue
 
-		grep -q -E '(^|,)users?(,|$)' <<<"$OPTS" || continue
+		if [ -n "$USER_MODE" ]
+		then
+			# In user mode, filter to only user-mountable mount points.
+			grep -q -E '(^|,)users?(,|$)' <<<"$OPTS" || continue
+		fi
 
 		# Append to bash array.
 		USER_DSTS=("${USER_DSTS[@]}" "$DST")
 	done </etc/fstab
 
-	local CHOICE_TITLE="Select a user-mountable mount point to mount:"
+	local CHOICE_TITLE="Select a${USER_MODE:+ user-mountable} mount point to mount:"
 	give-choice-title
 
-	local PS3="$BASENAME mount> "
+	local PS3="$(get-baseprompt) mount> "
 
 	local DST
 	select DST in "${USER_DSTS[@]}"
@@ -75,7 +79,11 @@ action-umount() {
 		# Skip empty lines.
 		[ -n "$SRC" ] || continue
 
-		grep -q -E '(^|,)users?(,|$)' <<<"$OPTS" || continue
+		if [ -n "$USER_MODE" ]
+		then
+			# In user mode, filter to only user-mountable mount points.
+			grep -q -E '(^|,)users?(,|$)' <<<"$OPTS" || continue
+		fi
 
 		# Append to bash array.
 		USER_DSTS=("${USER_DSTS[@]}" "$DST")
@@ -97,10 +105,10 @@ action-umount() {
 	done </proc/mounts
 
 
-	local CHOICE_TITLE="Select a mounted user-mountable mount point to umount:"
+	local CHOICE_TITLE="Select a mounted${USER_MODE:+ user-mountable} mount point to umount:"
 	give-choice-title
 
-	local PS3="$BASENAME umount> "
+	local PS3="$(get-baseprompt) umount> "
 
 	local DST
 	select DST in "${MOUNTED_DSTS[@]}"
@@ -165,7 +173,7 @@ action-list-mounts() {
 	local CHOICE_TITLE="Retrieve mount details for a configured & mounted mount point:"
 	give-choice-title
 
-	local PS3="$BASENAME list-mounts> "
+	local PS3="$(get-baseprompt) list-mounts> "
 
 	local DST
 	select DST in "${MOUNTED_DSTS[@]}"
@@ -200,6 +208,19 @@ action-kerberos() {
 	return 1
 }
 
+action-toggle-user-mode() {
+	if [ -n "$USER_MODE" ]
+	then
+		USER_MODE=
+	else
+		USER_MODE="user mode"
+	fi
+	PS3="$(get-baseprompt)> "
+}
+
+
+USER_MODE="user mode"
+[ "$UID" -eq 0 ] && USER_MODE=
 
 CHOICE_TITLE="What do you want to do today?"
 
@@ -220,9 +241,12 @@ give-hint
 
 ORIG_PS3="$PS3"
 
-PS3="$BASENAME> "
+get-baseprompt() {
+	echo -n "(${USER_MODE:-root mode}) $BASENAME"
+}
+PS3="$(get-baseprompt)> "
 
-VALID_ACTIONS=(mount umount list-mounts kerberos)
+VALID_ACTIONS=(mount umount list-mounts kerberos toggle-user-mode)
 select ACTION in "${VALID_ACTIONS[@]}"
 do
 	if [ -z "$ACTION" ]
