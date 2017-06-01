@@ -18,6 +18,12 @@ action-mount() {
 	local SRC DST TYPE OPTS DUMMY
 	while read SRC DST TYPE OPTS DUMMY
 	do
+		# Skip comments.
+		[ "${SRC:0:1}" = "#" ] && continue
+
+		# Skip empty lines.
+		[ -n "$SRC" ] || continue
+
 		grep -q -E '(^|,)users?(,|$)' <<<"$OPTS" || continue
 
 		# Append to bash array.
@@ -68,6 +74,12 @@ action-list-mounts() {
 	local SRC DST TYPE OPTS DUMMY
 	while read SRC DST TYPE OPTS DUMMY
 	do
+		# Skip comments.
+		[ "${SRC:0:1}" = "#" ] && continue
+
+		# Skip empty lines.
+		[ -n "$SRC" ] || continue
+
 		# Append to bash array.
 		CONF_DSTS=("${CONF_DSTS[@]}" "$DST")
 	done </etc/fstab
