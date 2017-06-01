@@ -56,11 +56,15 @@ action-kerberos() {
 
 echo "What do you want to do today?"
 
-echo
-echo "Hint: Enter the number of an option you want to invoke,"
-echo "      or 0 or ^D (Ctrl-D, End-of-Transmission) to exit"
-echo "      to enclosing scope."
-echo
+hint() {
+	echo
+	echo "Hint: Enter the number of an option you want to invoke,"
+	echo "      or 0 or ^D (Ctrl-D, End-of-Transmission) to exit"
+	echo "      to enclosing scope. Press enter without any input"
+	echo "      to repeat the list of options."
+	echo
+}
+hint
 
 ORIG_PS3="$PS3"
 
@@ -68,7 +72,25 @@ PS3="$BASENAME> "
 
 select ACTION in mount umount list-mounts kerberos
 do
-	[ -n "$ACTION" ] || { echo "Exit $BASENAME."; break; }
+	if [ -z "$ACTION" ]
+	then
+		case "$REPLY" in
+		\?|help)
+			hint
+			continue
+			;;
+		0|exit|quit)
+			echo "Exit $BASENAME."
+			break
+			;;
+		*)
+			warn "Invalid reply \"$REPLY\"!"
+			continue
+			;;
+		esac
+	fi
 
 	action-"$ACTION" || warn "Warning: Action \"$ACTION\" seems to have been unsuccessful."
 done
+
+exit 0
