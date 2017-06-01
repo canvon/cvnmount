@@ -64,8 +64,70 @@ action-mount() {
 }
 
 action-umount() {
-	warn "Action umount: Not implemented, yet."
-	return 1
+	local USER_DSTS=()
+
+	local SRC DST TYPE OPTS DUMMY
+	while read SRC DST TYPE OPTS DUMMY
+	do
+		# Skip comments.
+		[ "${SRC:0:1}" = "#" ] && continue
+
+		# Skip empty lines.
+		[ -n "$SRC" ] || continue
+
+		grep -q -E '(^|,)users?(,|$)' <<<"$OPTS" || continue
+
+		# Append to bash array.
+		USER_DSTS=("${USER_DSTS[@]}" "$DST")
+	done </etc/fstab
+
+
+	local MOUNTED_DSTS=()
+
+	while read SRC DST TYPE OPTS DUMMY
+	do
+		local USER_DST
+		for USER_DST in "${USER_DSTS[@]}"
+		do
+			if [ "$DST" = "$USER_DST" ]
+			then
+				MOUNTED_DSTS=("${MOUNTED_DSTS[@]}" "$DST")
+			fi
+		done
+	done </proc/mounts
+
+
+	local CHOICE_TITLE="Select a mounted user-mountable mount point to umount:"
+	give-choice-title
+
+	local PS3="$BASENAME umount> "
+
+	local DST
+	select DST in "${MOUNTED_DSTS[@]}"
+	do
+		if [ -z "$DST" ]
+		then
+			case "$REPLY" in
+			\?|help)
+				give-hint
+				continue
+				;;
+			0|exit|quit)
+				echo "Exit $BASENAME action umount."
+				break
+				;;
+			*)
+				warn "umount prompt: Invalid reply \"$REPLY\"!"
+				continue
+				;;
+			esac
+		fi
+
+		echo "Unmounting $DST ..."
+		umount "$DST" || warn "Error: Unmounting $DST failed"
+	done
+
+	return 0
 }
 
 action-list-mounts() {
@@ -98,6 +160,7 @@ action-list-mounts() {
 			fi
 		done
 	done </proc/mounts
+
 
 	local CHOICE_TITLE="Retrieve mount details for a configured & mounted mount point:"
 	give-choice-title
