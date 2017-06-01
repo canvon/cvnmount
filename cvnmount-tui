@@ -210,8 +210,55 @@ action-list-mounts() {
 }
 
 action-kerberos() {
-	warn "Action Kerberos: Not implemented, yet."
-	return 1
+	local CHOICE_TITLE="Select a Kerberos command to run:"
+	give-choice-title
+
+	local PS3="$(get-baseprompt) kerberos> "
+
+	local CMD
+	local VALID_CMDS=(kinit kdestroy klist)
+	select CMD in "${VALID_CMDS[@]}"
+	do
+		if [ -z "$CMD" ]
+		then
+			case "$REPLY" in
+			\?|help)
+				give-hint
+				continue
+				;;
+			0|exit|quit)
+				echo "Exit $BASENAME action kerberos."
+				break
+				;;
+			*)
+				# Try to lookup a command for the reply string-wise.
+				local OTHER_CMD
+				for OTHER_CMD in "${VALID_CMDS[@]}"
+				do
+					if [ "$REPLY" = "$OTHER_CMD" ]
+					then
+						CMD="$OTHER_CMD"
+						break
+					fi
+				done
+
+				# Still no command to execute?
+				if [ -z "$CMD" ]
+				then
+					warn "kerberos prompt: Invalid reply \"$REPLY\"!"
+					continue
+				fi
+				# Otherwise, fall-through.
+				;;
+			esac
+		fi
+
+		echo "Running Kerberos command $CMD ..."
+		echo
+		{ "$CMD" && echo; } || warn "Error: Running Kerberos command $CMD failed"
+	done
+
+	return 0
 }
 
 action-toggle-user-mode() {
