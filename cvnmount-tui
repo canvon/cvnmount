@@ -183,6 +183,51 @@ action-list-mounts() {
 	return 0
 }
 
+action-shell() {
+	local TMP_DSTS=()
+	_ONLY_USER=yes read-mounts </etc/fstab
+	local CONF_DSTS=("${TMP_DSTS[@]}")
+
+
+	TMP_DSTS=()
+	_ONLY_CONF=yes read-mounts </proc/mounts
+	local MOUNTED_DSTS=("${TMP_DSTS[@]}")
+
+
+	local CHOICE_TITLE="Start a sub-shell in a configured & mounted mount point:"
+	give-choice-title
+
+	local PS3="$(get-baseprompt) shell> "
+
+	local DST
+	select DST in "${MOUNTED_DSTS[@]}"
+	do
+		if [ -z "$DST" ]
+		then
+			case "$REPLY" in
+			\?|help)
+				give-hint
+				continue
+				;;
+			0|exit|quit)
+				echo "Exit $BASENAME action shell."
+				break
+				;;
+			*)
+				warn "prompt for shell: Invalid reply \"$REPLY\"!"
+				continue
+				;;
+			esac
+		fi
+
+		echo "Spawning a sub-shell on mount point $DST ..."
+		( cd "$DST" && exec "$SHELL" ) || warn "Error: Sub-shell on mount point $DST exited unsuccessfully"
+		echo "Continuing $BASENAME."
+	done
+
+	return 0
+}
+
 action-kerberos() {
 	local CHOICE_TITLE="Select a Kerberos command to run:"
 	give-choice-title
@@ -318,7 +363,7 @@ get-baseprompt() {
 }
 PS3="$(get-baseprompt)> "
 
-VALID_ACTIONS=(mount umount list-mounts kerberos toggle-user-mode)
+VALID_ACTIONS=(mount umount list-mounts shell kerberos toggle-user-mode)
 select ACTION in "${VALID_ACTIONS[@]}"
 do
 	if [ -z "$ACTION" ]
