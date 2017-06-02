@@ -74,6 +74,12 @@ action-mount() {
 	done
 
 
+	if [ "${#NOTMOUNTED_DSTS}" -eq 0 ]
+	then
+		echo "No options available at this time. Exit $BASENAME action mount."
+		return 0
+	fi
+
 	local CHOICE_TITLE="Select a${USER_MODE:+ user-mountable} mount point to mount:"
 	give-choice-title
 
@@ -117,6 +123,12 @@ action-umount() {
 	_ONLY_CONF=yes read-mounts </proc/mounts
 	local MOUNTED_DSTS=("${TMP_DSTS[@]}")
 
+
+	if [ "${#MOUNTED_DSTS}" -eq 0 ]
+	then
+		echo "No options available at this time. Exit $BASENAME action umount."
+		return 0
+	fi
 
 	local CHOICE_TITLE="Select a mounted${USER_MODE:+ user-mountable} mount point to umount:"
 	give-choice-title
@@ -162,6 +174,12 @@ action-list-mounts() {
 	local MOUNTED_DSTS=("${TMP_DSTS[@]}")
 
 
+	if [ "${#MOUNTED_DSTS}" -eq 0 ]
+	then
+		echo "No options available at this time. Exit $BASENAME action list-mounts."
+		return 0
+	fi
+
 	local CHOICE_TITLE="Retrieve mount details for a configured & mounted mount point:"
 	give-choice-title
 
@@ -205,6 +223,12 @@ action-shell() {
 	_ONLY_CONF=yes read-mounts </proc/mounts
 	local MOUNTED_DSTS=("${TMP_DSTS[@]}")
 
+
+	if [ "${#MOUNTED_DSTS}" -eq 0 ]
+	then
+		echo "No options available at this time. Exit $BASENAME action shell."
+		return 0
+	fi
 
 	local CHOICE_TITLE="Start a sub-shell in a configured & mounted mount point:"
 	give-choice-title
