@@ -62,13 +62,25 @@ action-mount() {
 	local CONF_DSTS=("${TMP_DSTS[@]}")
 
 
+	local NOTMOUNTED_DSTS=()
+	local DST
+	for DST in "${CONF_DSTS[@]}"
+	do
+		# Skip already mounted mount-points.
+		awk "\$2 == \"$DST\" { flag=1; exit 0 } END { if (!flag) { exit 1 } }" </proc/mounts \
+			&& continue
+
+		NOTMOUNTED_DSTS=("${NOTMOUNTED_DSTS[@]}" "$DST")
+	done
+
+
 	local CHOICE_TITLE="Select a${USER_MODE:+ user-mountable} mount point to mount:"
 	give-choice-title
 
 	local PS3="$(get-baseprompt) mount> "
 
 	local DST
-	select DST in "${CONF_DSTS[@]}"
+	select DST in "${NOTMOUNTED_DSTS[@]}"
 	do
 		if [ -z "$DST" ]
 		then
