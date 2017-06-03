@@ -180,7 +180,7 @@ action-list-mounts() {
 		return 0
 	fi
 
-	local CHOICE_TITLE="Retrieve mount details for a configured & mounted mount point:"
+	local CHOICE_TITLE="Retrieve mount details for a configured${USER_MODE:+, user-mountable} & mounted mount point:"
 	give-choice-title
 
 	local PS3="$(get-baseprompt) list-mounts> "
@@ -230,7 +230,7 @@ action-shell() {
 		return 0
 	fi
 
-	local CHOICE_TITLE="Start a sub-shell in a configured & mounted mount point:"
+	local CHOICE_TITLE="Start a sub-shell in a configured${USER_MODE:+, user-mountable} & mounted mount point:"
 	give-choice-title
 
 	local PS3="$(get-baseprompt) shell> "
